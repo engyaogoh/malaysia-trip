@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ipoh &amp; Penang — Family Trip 16–24 Dec 2026</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   :root{
     --ink:#2b2420; --muted:#6d6259; --paper:#faf6f0; --card:#fff;
@@ -12,11 +14,13 @@
   *{box-sizing:border-box; margin:0; padding:0}
   body{font-family:Georgia,'Times New Roman',serif; background:var(--paper); color:var(--ink); line-height:1.65}
   .wrap{max-width:880px; margin:0 auto; padding:0 20px}
-  header{background:linear-gradient(140deg,#1f6f6b 0%,#134a47 100%); color:#fff; padding:56px 0 44px}
+  header{background:linear-gradient(140deg,#1f6f6b 0%,#134a47 100%); color:#fff; padding:52px 0 40px}
   header h1{font-size:clamp(1.9rem,5vw,3rem); font-weight:400; letter-spacing:.5px}
   header p{color:#cfe6e3; margin-top:10px; font-size:1.05rem}
   .badge{display:inline-block; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.3);
     border-radius:999px; padding:4px 14px; font-size:.85rem; margin:14px 8px 0 0; font-family:Verdana,sans-serif}
+  .strip{display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:30px}
+  .strip img{width:100%; height:130px; object-fit:cover; border-radius:8px; display:block}
   h2{font-weight:400; font-size:1.6rem; margin:0 0 18px; border-bottom:2px solid var(--line); padding-bottom:10px}
   section{padding:44px 0}
   .route{display:flex; flex-wrap:wrap; gap:10px; align-items:center; font-family:Verdana,sans-serif; font-size:.92rem}
@@ -30,21 +34,37 @@
   .day{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:26px 28px; margin-bottom:22px}
   .day h3{font-weight:400; font-size:1.25rem; color:var(--accent)}
   .day .date{font-family:Verdana,sans-serif; font-size:.78rem; text-transform:uppercase; letter-spacing:1px; color:var(--muted)}
+  .day img{width:100%; max-height:260px; object-fit:cover; border-radius:10px; margin:14px 0 2px}
+  .credit{font-family:Verdana,sans-serif; font-size:.68rem; color:#9b9186}
   .day ul{margin:12px 0 0 20px}
   .day li{margin-bottom:8px}
   .day li b{color:var(--ink)}
   .tag{display:inline-block; font-family:Verdana,sans-serif; font-size:.7rem; border-radius:6px; padding:2px 8px;
     margin-left:6px; vertical-align:middle; text-transform:uppercase; letter-spacing:.5px}
   .food{background:#fdeee9; color:var(--accent)} .see{background:#e6f2f1; color:var(--accent2)}
+  .hours{font-family:Verdana,sans-serif; font-size:.75rem; background:var(--soft); color:#4d453e;
+    border-radius:6px; padding:2px 8px; margin-left:6px; vertical-align:middle; white-space:nowrap; display:inline-block; margin-top:2px}
   .links{margin-top:14px; padding-top:12px; border-top:1px dashed var(--line); font-size:.88rem; font-family:Verdana,sans-serif}
   .links a{color:var(--accent2); text-decoration:none; border-bottom:1px dotted var(--accent2); margin-right:14px; white-space:nowrap; display:inline-block; margin-bottom:4px}
   .pace{font-family:Verdana,sans-serif; font-size:.8rem; color:var(--muted); margin-top:10px}
   .pace b{color:var(--accent)}
+  #map{height:520px; border-radius:12px; border:1px solid var(--line); z-index:1}
+  .mapbtns{margin:12px 0}
+  .mapbtns button{font-family:Verdana,sans-serif; font-size:.85rem; border:1.5px solid var(--accent2); color:var(--accent2);
+    background:var(--card); border-radius:8px; padding:7px 18px; margin-right:8px; cursor:pointer}
+  .mapbtns button:hover{background:var(--soft)}
+  .dishes{display:grid; grid-template-columns:repeat(auto-fill,minmax(255px,1fr)); gap:16px}
+  .dish{background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden}
+  .dish img{width:100%; height:150px; object-fit:cover; display:block}
+  .dish .in{padding:14px 16px}
+  .dish h4{font-weight:400; font-size:1.05rem; color:var(--accent)}
+  .dish p{font-size:.85rem; margin-top:4px}
+  .dish .hours{margin:6px 0 0}
   .tips{background:var(--soft); border-radius:12px; padding:26px 28px}
   .tips ul{margin:10px 0 0 20px} .tips li{margin-bottom:9px}
   a.more{color:var(--accent); text-decoration:none; border-bottom:1px dotted var(--accent)}
   footer{background:#241d19; color:#a99c90; text-align:center; padding:34px 20px; font-size:.85rem; font-family:Verdana,sans-serif}
-  @media(max-width:640px){ .day{padding:20px} th,td{padding:8px} .route{justify-content:center} }
+  @media(max-width:640px){ .day{padding:20px} th,td{padding:8px} .route{justify-content:center} .strip img{height:90px} #map{height:420px} }
 </style>
 </head>
 <body>
@@ -54,8 +74,13 @@
     <h1>Ipoh &amp; Penang — A Relaxing Family Trip</h1>
     <p>16 – 24 December 2026 · 9 days · 4 adults (Dad 73 · Mum 71 · wife 39 · you 38)</p>
     <span class="badge">🍜 Food first</span>
-    <span class="badge">🛑 No long journeys — longest ride 2h 15m</span>
-    <span class="badge">🌤 Dec = warm, occasional showers</span>
+    <span class="badge">🛑 No temples — heritage, nature &amp; food only</span>
+    <span class="badge">🚗 Door-to-door private car, no long walks</span>
+  </div>
+  <div class="wrap strip">
+    <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Ipoh%20railway%20station%202024%2C%20Perak%20Malaysia%2007.jpg?width=900" alt="Ipoh Railway Station">
+    <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Tasik%20Cermin.jpg?width=900" alt="Tasik Cermin mirror lake, Ipoh">
+    <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Penang%20hill%20funicular%20railway.jpg?width=900" alt="Penang Hill funicular railway">
   </div>
 </header>
 
@@ -64,37 +89,52 @@
 <section>
   <h2>The Route</h2>
   <div class="route">
-    <div class="stop"><b>✈️ Singapore</b><span>16 Dec · fly 1h 20m</span></div>
+    <div class="stop"><b>✈️ Singapore</b><span>Wed 16 Dec · fly 1h 20m</span></div>
     <div class="arrow">→</div>
     <div class="stop"><b>Ipoh</b><span>4 nights · slow &amp; delicious</span></div>
     <div class="arrow">→</div>
-    <div class="stop"><b>🚄 ETS train</b><span>20 Dec · 2h 15m</span></div>
+    <div class="stop"><b>🚗 Private MPV</b><span>Sun 20 Dec · 2.5–3h door-to-door</span></div>
     <div class="arrow">→</div>
     <div class="stop"><b>Penang</b><span>4 nights · heritage &amp; hawker</span></div>
     <div class="arrow">→</div>
-    <div class="stop"><b>Singapore ✈️</b><span>24 Dec · fly 1h 30m</span></div>
+    <div class="stop"><b>Singapore ✈️</b><span>Thu 24 Dec · home for Christmas Eve</span></div>
   </div>
   <p style="margin-top:18px">
-    <b>Why no KL or Johor:</b> both mean extra hotel moves and long car legs. With Dad (73) and Mum (71)
-    on board, two bases with everything walkable or a 10-min Grab away beats ticking a third city.
-    Scoot flies <b>direct Singapore → Ipoh</b>, so you land right where the food is, and fly home
-    <b>direct Penang → Singapore</b> — the only driving is a single 30-min bridge hop from the train.
+    <b>Why this shape:</b> Scoot flies <b>direct Singapore → Ipoh</b> (currently listed as TR486, departing SIN
+    mid-afternoon on 16 Dec — verify the exact date and seats when booking), and home is a
+    <b>direct Penang → Singapore</b> flight. KL and Johor are left out: every extra city means another hotel
+    check-in and another long ride. In Ipoh you'll have a <b>private 7-seater MPV with driver</b> on
+    sightseeing days — the driver drops your parents at the door of every kopitiam and attraction. For the
+    Ipoh → Penang transfer the MPV also beats the train: no platforms, no luggage-hauling, just
+    door-to-door with a toilet stop on demand.
   </p>
+</section>
+
+<section>
+  <h2>Interactive Trip Map</h2>
+  <p style="margin-bottom:6px; font-size:.95rem">🔴 food · 🔵 sightseeing — tap a pin for details and a Google Maps link.
+  Order: <b>Ipoh Wed 16 – Sat 19</b> → transfer <b>Sun 20</b> → <b>Penang Sun 20 – Thu 24</b>.</p>
+  <div class="mapbtns">
+    <button onclick="flyTo('ipoh')">📍 Ipoh</button>
+    <button onclick="flyTo('penang')">📍 Penang</button>
+    <button onclick="flyTo('all')">🗺 Whole trip</button>
+  </div>
+  <div id="map"></div>
 </section>
 
 <section>
   <h2>At a Glance</h2>
   <table>
     <tr><th>Date</th><th>Base</th><th>Plan</th></tr>
-    <tr><td>Tue 16 Dec</td><td>Ipoh</td><td>Fly SIN→IPH, easy evening</td></tr>
-    <tr><td>Wed 17 Dec</td><td>Ipoh</td><td>Old Town coffee, murals, Concubine Lane</td></tr>
-    <tr><td>Thu 18 Dec</td><td>Ipoh</td><td>Kek Lok Tong cave temple, zen garden, rest</td></tr>
-    <tr><td>Fri 19 Dec</td><td>Ipoh</td><td>Dim sum, Perak Tong, slow afternoon</td></tr>
-    <tr><td>Sat 20 Dec</td><td>Penang</td><td>ETS train to Butterworth, Gurney Drive hawker</td></tr>
-    <tr><td>Sun 21 Dec</td><td>Penang</td><td>George Town heritage: jetties, clan houses, street food</td></tr>
-    <tr><td>Mon 22 Dec</td><td>Penang</td><td>Penang Hill funicular + Kek Lok Si temple</td></tr>
-    <tr><td>Tue 23 Dec</td><td>Penang</td><td>Batu Ferringhi morning, farewell dinner</td></tr>
-    <tr><td>Wed 24 Dec</td><td>—</td><td>Fly PEN→SIN home for Christmas Eve</td></tr>
+    <tr><td>Wed 16 Dec</td><td>Ipoh</td><td>Fly SIN→IPH (afternoon), easy dinner, rest</td></tr>
+    <tr><td>Thu 17 Dec</td><td>Ipoh</td><td>Old Town: dim sum, white coffee, Han Chin Pet Soo, Concubine Lane</td></tr>
+    <tr><td>Fri 18 Dec</td><td>Ipoh</td><td>Tasik Cermin mirror lake + boat, taugeh ayam lunch, tau fu fah</td></tr>
+    <tr><td>Sat 19 Dec</td><td>Ipoh</td><td>Kellie's Castle morning, slow afternoon, Cowan St dinner</td></tr>
+    <tr><td>Sun 20 Dec</td><td>Penang</td><td>Private MPV to George Town, Chulia Street hawkers dinner</td></tr>
+    <tr><td>Mon 21 Dec</td><td>Penang</td><td>Blue Mansion tour 11am, Hameediyah lunch, Chew Jetty, Line Clear</td></tr>
+    <tr><td>Tue 22 Dec</td><td>Penang</td><td>Penang Hill funicular, asam laksa lunch, Kimberley St evening</td></tr>
+    <tr><td>Wed 23 Dec</td><td>Penang</td><td>The TOP Komtar deck, hokkien mee + cendol, Gurney farewell dinner</td></tr>
+    <tr><td>Thu 24 Dec</td><td>—</td><td>Fly PEN→SIN, home for Christmas Eve</td></tr>
   </table>
 </section>
 
@@ -102,146 +142,188 @@
   <h2>Day by Day</h2>
 
   <div class="day">
-    <span class="date">Day 1 · Tue 16 Dec</span>
+    <span class="date">Day 1 · Wed 16 Dec</span>
     <h3>Fly in, eat early, sleep well</h3>
+    <img src="https://commons.wikimedia.org/wiki/Special:FilePath/BeanSproutsChicken.jpg?width=900" alt="Ipoh bean sprout chicken">
+    <span class="credit">photo: Wikimedia Commons</span>
     <ul>
-      <li><b>Morning:</b> Scoot direct flight Singapore → Ipoh (~1h 20m). Land, Grab (~15 min) to hotel in Ipoh Old Town / Tin Town area.</li>
-      <li><b>Afternoon:</b> Check in, nap. Walk only as far as the coffee shop.</li>
-      <li><b>Dinner:</b> <span class="tag food">Food</span> Lou Wong or Onn Kee — <b>Ipoh taugeh ayam</b> (bean sprouts chicken) with silky sar hor fun. Ipoh's crunchy fat bean sprouts are the city's signature.</li>
+      <li><b>15:45–17:05:</b> Scoot TR486 direct Singapore → Ipoh (currently listed — confirm when booking). Grab ~15 min to the hotel, Old Town / New Town side.</li>
+      <li><b>19:30 dinner:</b> <span class="tag food">Food</span> <b>Lou Wong</b> (or Onn Kee across the street) — <b>taugeh ayam</b>, bean-sprout chicken over silky hor fun. <span class="hours">Lou Wong: daily 10am–10pm ✓</span></li>
+      <li>Rest after — no sightseeing today. The food crawl starts tomorrow.</li>
     </ul>
     <div class="links">
-      <a href="https://www.flyscoot.com/flights/en/flights-from-singapore-to-ipoh">✈️ Scoot SIN–IPH flights</a>
+      <a href="https://www.flyscoot.com/flights/en/flights-from-singapore-to-ipoh">✈️ Scoot SIN–IPH</a>
+      <a href="https://ieatishootipost.sg/best-food-in-ipoh-ieat-makan-trip/">🍜 Ipoh food guide</a>
     </div>
-    <p class="pace"><b>Pace:</b> travel day — one meal out, nothing else.</p>
+    <p class="pace"><b>Pace:</b> travel day — one meal, one nap.</p>
   </div>
 
   <div class="day">
-    <span class="date">Day 2 · Wed 17 Dec</span>
+    <span class="date">Day 2 · Thu 17 Dec</span>
     <h3>Old Town at walking pace</h3>
+    <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Three%20dim%20sum%20in%20steamer%20basket.jpg?width=900" alt="Ipoh dim sum">
+    <span class="credit">photo: Wikimedia Commons</span>
     <ul>
-      <li><b>Breakfast:</b> <span class="tag food">Food</span> <b>Sin Yoon Loong</b> (since 1937, the original white coffee) or <b>Nam Heong</b> next door — white coffee, egg tarts, kai see hor fun. Sit down; no queues to chase.</li>
-      <li><b>Morning:</b> <span class="tag see">Sight</span> Flat, shaded stroll through <b>Ipoh Old Town</b>: Concubine Lane, Ernest Zacharevic murals, the colonial railway station ("Taj Mahal of Ipoh").</li>
-      <li><b>Lunch:</b> <span class="tag food">Food</span> Old Town curry mee or <b>Thean Chun</b> coffee shop (chicken intestines optional 😄, caramel custard mandatory).</li>
-      <li><b>Afternoon:</b> <span class="tag see">Sight</span> <b>Ho Yan Hor Museum</b> — small, air-conditioned, free, all on one level. Perfect for parents.</li>
-      <li><b>Dinner:</b> Salt-baked chicken (Aun Kheng Lim) + simple wantan mee.</li>
+      <li><b>8:30 breakfast:</b> <span class="tag food">Food</span> <b>Yum Cha House</b> or <b>Foh San</b> — Ipoh-style dim sum, trolleys come to you. <span class="hours">go before 10am</span></li>
+      <li><b>10:00:</b> <span class="tag see">Sight</span> <b>Han Chin Pet Soo</b> — a 1929 tin-mining club turned air-conditioned museum. <span class="hours">closed Mondays ✓ · free · book ahead</span></li>
+      <li><b>11:45:</b> <span class="tag food">Food</span> <b>Sin Yoon Loong</b> white coffee (the 1937 pioneer) with egg tarts. <span class="hours">daily 6:30am–2:30pm ✓</span></li>
+      <li><b>12:30 lunch:</b> <span class="tag food">Food</span> <b>Thean Chun</b> coffee shop — kai see hor fun + caramel custard. <span class="hours">morning–mid-afternoon, confirm locally</span></li>
+      <li><b>2–5pm:</b> Hotel rest. (Optional add-on: Ho Yan Hor Museum, Tue–Sun 10am–4pm, free.)</li>
+      <li><b>5pm:</b> <span class="tag see">Sight</span> Flat stroll: <b>Concubine Lane</b> (liveliest late afternoon), the murals, photo stop at the white <b>railway station</b> — "Taj Mahal of Ipoh". Driver drops at each corner.</li>
     </ul>
     <div class="links">
-      <a href="https://hyhmuseum.com/">🏛 Ho Yan Hor Museum</a>
-      <a href="https://danielfooddiary.com/2024/10/11/namheongipoh/">☕ Nam Heong review</a>
-      <a href="https://ieatishootipost.sg/best-food-in-ipoh-ieat-makan-trip/">🍜 IEatIpoh food guide</a>
-      <a href="https://www.youtube.com/watch?v=K_oL5ut1Dwc">▶️ Video: 2 Days in Ipoh</a>
+      <a href="https://www.tripadvisor.com/Attraction_Review-g298298-d9750950-Reviews-Ho_Yan_Hor_Museum-Ipoh_Kinta_District_Perak.html">🏛 Ho Yan Hor Museum reviews</a>
+      <a href="https://danielfooddiary.com/2024/10/11/namheongipoh/">☕ Nam Heong / Sin Yoon Loong review</a>
+      <a href="https://www.youtube.com/watch?v=sUJaCCOSbrM">▶️ 48 Hours in Ipoh (covers this day)</a>
     </div>
-    <p class="pace"><b>Pace:</b> ~2 km total walking, all flat, with a long afternoon break.</p>
+    <p class="pace"><b>Pace:</b> ~1.5 km of flat walking, rides between stops.</p>
   </div>
 
   <div class="day">
-    <span class="date">Day 3 · Thu 18 Dec</span>
-    <h3>Cave temple morning, long lunch, rest</h3>
+    <span class="date">Day 3 · Fri 18 Dec</span>
+    <h3>Mirror-lake morning, long lunch, dessert</h3>
+    <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Tasik%20Cermin.jpg?width=900" alt="Tasik Cermin mirror lake">
+    <span class="credit">photo: Wikimedia Commons</span>
     <ul>
-      <li><b>Morning:</b> <span class="tag see">Sight</span> <b>Kek Lok Tong cave temple &amp; zen gardens</b> (15 min Grab). Drive right up to the entrance; the cave is cool and mostly level, with a pretty garden behind.</li>
-      <li><b>Lunch:</b> <span class="tag food">Food</span> <b>Moon De Moon</b> or Pasir Pinji big-tree-head yong tau foo / chee cheong fun nearby.</li>
-      <li><b>Afternoon:</b> Home for nap. Optional: <b>Ipoh pomelo</b> from Tambun on the way back — sweet, juicy, travels home well.</li>
-      <li><b>Dinner:</b> <span class="tag food">Food</span> Freshwater prawns or <b>Tuck Kee</b> roast delights — or just repeat yesterday's favourites. That's allowed on holiday.</li>
+      <li><b>9:30:</b> <span class="tag see">Sight</span> <b>Tasik Cermin (Mirror Lake)</b> — limestone cliffs reflected in still green water, optional boat ride through the rock corridor. Viewing the lake is easy; the boat needs one careful step in/out. <span class="hours">open daily 9am–5:45pm · boats 9am–5:30pm · online ticket ≥1 day ahead, non-refundable</span></li>
+      <li><b>12:30 lunch:</b> <span class="tag food">Food</span> <b>Cowan Street Chicken by Ann Xin</b> — famous bean-sprout chicken rice. <span class="hours">closed Thursdays → we go Friday ✓</span></li>
+      <li><b>4:30 dessert:</b> <span class="tag food">Food</span> <b>Funny Mountain tau fu fah</b> — silky soya-bean pudding, warm with syrup. <span class="hours">afternoon, check hours locally</span></li>
+      <li><b>En route:</b> Heong Peng biscuits from a Gunung Rapat bakery — the classic Ipoh gift. Rain backup: skip the boat, the lake view is free.</li>
     </ul>
     <div class="links">
-      <a href="http://www.ipoh-city.com/attraction/Kek_Lok_Tong_Temple/">🏛 Kek Lok Tong guide</a>
-      <a href="https://www.tripadvisor.com/Attraction_Review-g298298-d6882920-Reviews-Kek_Lok_Tong_Cave_Temple_and_Zen_Gardens-Ipoh_Kinta_District_Perak.html">⭐ Tripadvisor reviews</a>
-      <a href="https://www.youtube.com/watch?v=jBx5Gc2BMWk">▶️ Video: 3D2N Ipoh food trip</a>
+      <a href="https://tasikcermin.com/">🏞 Tasik Cermin official site (tickets)</a>
+      <a href="https://www.youtube.com/watch?v=K_oL5ut1Dwc">▶️ 2 Days in Ipoh (incl. Tasik Cermin)</a>
     </div>
-    <p class="pace"><b>Pace:</b> one attraction, one long lunch, one nap. Peak relaxation.</p>
+    <p class="pace"><b>Pace:</b> one attraction, two meals, one nap. Peak relaxation.</p>
   </div>
 
   <div class="day">
-    <span class="date">Day 4 · Fri 19 Dec</span>
-    <h3>Dim sum morning, cave temple, slow afternoon</h3>
+    <span class="date">Day 4 · Sat 19 Dec</span>
+    <h3>Kellie's Castle and a slow afternoon</h3>
+    <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Kellie%27s%20Castle.jpg?width=900" alt="Kellie's Castle">
+    <span class="credit">photo: Wikimedia Commons</span>
     <ul>
-      <li><b>Breakfast:</b> <span class="tag food">Food</span> <b>Foh San dim sum</b> — Ipoh's grand old dim sum hall. Go before 9am for the trolleys; everything comes to you, no standing.</li>
-      <li><b>Morning:</b> <span class="tag see">Sight</span> <b>Perak Tong cave temple</b> — magnificent golden Buddha inside a limestone cave. View the cave hall from the entrance; only climb the 400+ steps if the knees volunteer.</li>
-      <li><b>Afternoon:</b> Free time — massage, hotel pool, or the <b>Ipoh Heritage Trail</b> café-hopping (Sin Yoon Loong round two).</li>
-      <li><b>Dinner:</b> <span class="tag food">Food</span> <b>Yuk Sou Hin</b> (Weil Hotel, proper Cantonese) or another taugeh ayam night — it's that good.</li>
+      <li><b>9:30:</b> <span class="tag see">Sight</span> <b>Kellie's Castle</b> — an unfinished colonial mansion 20 min from town, moody corridors perfect for photos. Parents enjoy the ground level and lawns; the upper ruins are stairs-only. <span class="hours">small entry fee · go morning · confirm hours locally</span></li>
+      <li><b>Optional:</b> <span class="tag see">Sight</span> <b>Gunung Lang Recreational Park</b> — lake, boat ride, shaded boardwalks, if weather is kind.</li>
+      <li><b>Afternoon:</b> Rest. Last Ipoh shopping: white coffee packets &amp; pomelos.</li>
+      <li><b>Dinner:</b> <span class="tag food">Food</span> <b>Cowan Street Ayam Tauge &amp; Koitiau</b> — locals' favourite bean-sprout chicken with braised chicken feet. <span class="hours">go early, before the weekend crowd</span></li>
     </ul>
     <div class="links">
-      <a href="https://www.tripadvisor.com/Restaurant_Review-g298298-d808589-Reviews-or265-Foh_San-Ipoh_Kinta_District_Perak.html">🥟 Foh San reviews</a>
-      <a href="https://www.youtube.com/watch?v=2VuX6bMRQ4Q">▶️ Video: Ipoh 5-day guide</a>
+      <a href="https://www.youtube.com/watch?v=jBx5Gc2BMWk">▶️ 3D2N Ipoh food trip</a>
+      <a href="https://www.youtube.com/watch?v=2VuX6bMRQ4Q">▶️ 5 Days in Ipoh guide</a>
     </div>
-    <p class="pace"><b>Pace:</b> two soft stops, everything drive-up.</p>
+    <p class="pace"><b>Pace:</b> one outing, everything drive-up.</p>
   </div>
 
   <div class="day">
-    <span class="date">Day 5 · Sat 20 Dec</span>
-    <h3>The scenic train to Penang</h3>
+    <span class="date">Day 5 · Sun 20 Dec</span>
+    <h3>The easy ride up to Penang</h3>
+    <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Gurney%20Drive%2C%20George%20Town%20in%202018.jpg?width=900" alt="Gurney Drive, George Town">
+    <span class="credit">photo: Wikimedia Commons</span>
     <ul>
-      <li><b>Morning:</b> Late breakfast, 10am checkout. <span class="tag see">Sight</span> <b>ETS train Ipoh → Butterworth</b>, ~2h 15m of comfortable, air-con, scenic Kinta Valley riding. Book seats together early.</li>
-      <li><b>Afternoon:</b> Grab/taxi over the Penang bridge (~30–40 min) to a hotel in <b>George Town</b> (heritage area) — pick one with a lift and a café downstairs.</li>
-      <li><b>Evening:</b> <span class="tag food">Food</span> <b>Gurney Drive hawker centre</b> — asam laksa, char koay teow, oyster omelette, muar chee. Order one plate at a time; wander between stalls as appetite allows.</li>
+      <li><b>10:30:</b> Check out, private MPV departs Ipoh → George Town (~200 km, 2.5–3h, toilet stop included). Driver handles all luggage.</li>
+      <li><b>~13:30:</b> Check in near Macalister Rd / Komtar or Gurney Drive — modern hotel, lifts, restaurant downstairs.</li>
+      <li><b>18:30 dinner:</b> <span class="tag food">Food</span> <b>Chulia Street hawker stalls</b> — legendary evening street food. <span class="hours">Tue–Sun 4:30–10:30pm · Sunday ✓</span></li>
     </ul>
     <div class="links">
-      <a href="https://www.ktmb.com.my/ets.html">🚄 KTM ETS official site</a>
-      <a href="https://www.train36.com/ets-ipoh-to-butterworth.html">🎫 ETS Ipoh–Butterworth guide</a>
-      <a href="https://www.penang-traveltips.com/gurney-drive-hawker-centre.htm">🍢 Gurney Drive guide</a>
+      <a href="https://www.youtube.com/watch?v=Lxu0rgigYUQ">▶️ 24 Hours in Penang (preview tonight's food)</a>
     </div>
-    <p class="pace"><b>Pace:</b> longest single journey of the trip — and it's a seated train ride.</p>
+    <p class="pace"><b>Pace:</b> transfer day — seated the whole way, then hawker dinner.</p>
   </div>
 
   <div class="day">
-    <span class="date">Day 6 · Sun 21 Dec</span>
-    <h3>George Town heritage &amp; street food</h3>
+    <span class="date">Day 6 · Mon 21 Dec</span>
+    <h3>The Blue Mansion and the jetties</h3>
+    <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Penang%20Malaysia-%20Cheong-Fatt-Tze-Mansion-06.jpg?width=900" alt="Cheong Fatt Tze Blue Mansion">
+    <span class="credit">photo: Wikimedia Commons</span>
     <ul>
-      <li><b>Morning:</b> <span class="tag see">Sight</span> <b>Chew Jetty</b> (boardwalk, flat) → <b>Khoo Kongsi</b> clan house → <b>Pinang Peranakan Mansion</b> (chairs inside, air-con, Mum will love it).</li>
-      <li><b>Lunch:</b> <span class="tag food">Food</span> <b>Penang Road Teochew chendul</b> + kim tam kway teow th'ng nearby.</li>
-      <li><b>Afternoon:</b> <span class="tag see">Sight</span> Ernest Zacharevic street art hunt — or hire a <b>trishaw</b>; the ones in George Town take adults comfortably and Dad steers from the bench.</li>
-      <li><b>Dinner:</b> <span class="tag food">Food</span> Nyonya cuisine (Aunt Gaik or Nyonya Breeze) — book ahead, Christmas week is busy.</li>
+      <li><b>11:00:</b> <span class="tag see">Sight</span> <b>Cheong Fatt Tze — the Blue Mansion</b> guided tour of the indigo merchant's palace. <span class="hours">tours daily 11am &amp; 3:30pm, ~45 min · book ahead · 2nd floor has stairs, ground level is plenty</span></li>
+      <li><b>12:30 lunch:</b> <span class="tag food">Food</span> <b>Hameediyah</b> (est. 1907) — nasi kandar and murtabak, Lebuh Campbell.</li>
+      <li><b>1:30–4pm:</b> Hotel rest.</li>
+      <li><b>4:45:</b> <span class="tag see">Sight</span> <b>Chew Jetty</b> — stilt village over the water. First 200 m of boardwalk only; it can be uneven. Optional <b>Pinang Peranakan Mansion</b> nearby <span class="hours">daily 9:30am–5pm</span> if energy allows.</li>
+      <li><b>6:30 dinner:</b> <span class="tag food">Food</span> <b>Line Clear nasi kandar</b> (Jalan Penang) — the alley legend.</li>
     </ul>
     <div class="links">
-      <a href="https://www.tripadvisor.com/Attractions-g298303-Activities-George_Town_Penang_Island_Penang.html">🏛 George Town top sights</a>
-      <a href="https://www.youtube.com/watch?v=Xs4ZN3FdDmE">▶️ Video: George Town street food</a>
-      <a href="https://www.youtube.com/watch?v=WKTxeEdFkxw">▶️ Video: Penang food heaven</a>
+      <a href="https://www.cheongfatttzemansion.com/thebluemansion/discover/daily-tours/">🏛 Blue Mansion official tours</a>
+      <a href="https://www.youtube.com/watch?v=Xs4ZN3FdDmE">▶️ George Town street food tour</a>
     </div>
-    <p class="pace"><b>Pace:</b> broken into short walks between sit-down stops; trishaw covers the gaps.</p>
+    <p class="pace"><b>Pace:</b> seated tour + two short flat walks, rides in between.</p>
   </div>
 
   <div class="day">
-    <span class="date">Day 7 · Mon 22 Dec</span>
-    <h3>Up the hill, into the temple — both by cable</h3>
+    <span class="date">Day 7 · Tue 22 Dec</span>
+    <h3>Up Penang Hill by rail — zero climbing</h3>
+    <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Penang%20hill%20funicular%20railway.jpg?width=900" alt="Penang Hill funicular">
+    <span class="credit">photo: Wikimedia Commons</span>
     <ul>
-      <li><b>Morning:</b> <span class="tag see">Sight</span> <b>Penang Hill funicular</b> — a proper train to the top, cool air and island views. Book the fast-lane ticket online; no climbing needed.</li>
-      <li><b>Lunch:</b> <span class="tag food">Food</span> <b>Air Itam asam laksa</b> at the market — the most famous laksa in Malaysia, 10 min from the hill's base.</li>
-      <li><b>Afternoon:</b> <span class="tag see">Sight</span> <b>Kek Lok Si temple</b> — Malaysia's largest Buddhist temple. The incline lift carries you up to the Kuan Yin statue; the main halls are reachable with minimal stairs.</li>
-      <li><b>Evening:</b> Early dinner near the hotel; Christmas-eve-eve rest.</li>
+      <li><b>8:30:</b> <span class="tag see">Sight</span> <b>Penang Hill funicular</b> — a proper train to the summit: cooler air, George Town and the strait below, benches everywhere. <span class="hours">book the fast-lane ticket online · skip The Habitat canopy walk</span></li>
+      <li><b>11:30 lunch:</b> <span class="tag food">Food</span> <b>Wan Dao Tou asam laksa</b> (Air Itam) — the tangy fish-broth laksa Penang is famous for.</li>
+      <li><b>1–4:30pm:</b> Hotel rest.</li>
+      <li><b>Evening:</b> <span class="tag food">Food</span> <b>Kimberley Street</b> duck kway chap + kuih — comfort-food street. <span class="hours">evening; some stalls day-only — pick what's lit</span></li>
     </ul>
     <div class="links">
       <a href="https://www.penanghill.gov.my/index.php/en/tickets">🚡 Penang Hill official tickets</a>
-      <a href="https://www.feastographyblog.com/blog/kek-lok-si-temple">⛩ Kek Lok Si guide</a>
-      <a href="https://www.awaygowe.com/penang-hill/">🏔 Penang Hill first-hand guide</a>
+      <a href="https://www.youtube.com/watch?v=WKTxeEdFkxw">▶️ Penang food heaven</a>
     </div>
-    <p class="pace"><b>Pace:</b> both attractions are mechanised rides — stairs are optional everywhere.</p>
+    <p class="pace"><b>Pace:</b> the whole day's "hiking" is a seated funicular ride.</p>
   </div>
 
   <div class="day">
-    <span class="date">Day 8 · Tue 23 Dec</span>
-    <h3>Sea breeze and a farewell feast</h3>
+    <span class="date">Day 8 · Wed 23 Dec</span>
+    <h3>City from above, food from below</h3>
+    <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Charkwayteow.JPG?width=900" alt="Char kway teow">
+    <span class="credit">photo: Wikimedia Commons</span>
     <ul>
-      <li><b>Morning:</b> <span class="tag see">Sight</span> Grab to <b>Batu Ferringhi</b> — seaside breakfast, a short beach stroll, or just sit with coconut water. Optional: Tropical Spice Garden (mostly shaded, gentle paths).</li>
-      <li><b>Afternoon:</b> Last-minute shopping — white coffee packets, pomelos, Heong Peah biscuits from <b>Him Heang</b> / <b>Empress</b> for the family. Or pack; check-in luggage still pays off.</li>
-      <li><b>Dinner:</b> <span class="tag food">Food</span> Farewell Chinese seafood dinner — something with butter prawns and steamed fish. Toast the trip.</li>
+      <li><b>10:00:</b> <span class="tag see">Sight</span> <b>The TOP, KOMTAR</b> — indoor 65th-floor observation deck over the whole island; perfect if it rains, lift all the way up. <span class="hours">daily 10am–10pm (shorter Tue — we go Wed ✓)</span></li>
+      <li><b>11:30 lunch:</b> <span class="tag food">Food</span> <b>888 Hokkien Mee</b> (Lebuh Presgrave) or Siam Road char kway teow <span class="hours">go before noon, queues build fast</span></li>
+      <li><b>Dessert:</b> <span class="tag food">Food</span> <b>Penang Road Famous Teochew Chendul</b> — gula Melaka, coconut milk, shaved ice.</li>
+      <li><b>Afternoon:</b> Rest + pack. Last biscuits (Him Heang / Empress).</li>
+      <li><b>6:30:</b> <span class="tag food">Food</span> <b>Gurney Drive hawker centre</b> farewell dinner — order small plates from many stalls, graze together. One last sea breeze on the promenade.</li>
     </ul>
     <div class="links">
-      <a href="https://www.taufulou.com/gurney-drive-hawker-center-penang/">🍢 Gurney stalls ranked</a>
-      <a href="https://www.youtube.com/watch?v=7sNgNtoUrTk">▶️ Video: 24h Penang food tour</a>
+      <a href="https://www.penang-traveltips.com/gurney-drive-hawker-centre.htm">🍢 Gurney Drive guide</a>
+      <a href="https://www.taufulou.com/gurney-drive-hawker-center-penang/">🥢 Gurney stalls ranked</a>
+      <a href="https://www.youtube.com/watch?v=7sNgNtoUrTk">▶️ 24-hour Penang food tour</a>
     </div>
-    <p class="pace"><b>Pace:</b> whatever you feel like — buffer day by design.</p>
+    <p class="pace"><b>Pace:</b> indoor viewing + hawker grazing — buffer day by design.</p>
   </div>
 
   <div class="day">
-    <span class="date">Day 9 · Wed 24 Dec</span>
+    <span class="date">Day 9 · Thu 24 Dec</span>
     <h3>Home for Christmas Eve</h3>
     <ul>
-      <li><b>Morning:</b> One last kopi + kaya toast. Grab to Penang airport (~30 min from George Town).</li>
-      <li><b>Midday:</b> Scoot / AirAsia direct flight <b>PEN → SIN</b>, ~1h 30m. Home by afternoon, in time for Christmas Eve dinner.</li>
+      <li><b>Morning:</b> One last kopi + kaya toast. Prebooked car to Penang airport (~30 min).</li>
+      <li><b>Midday:</b> Direct flight <b>PEN → SIN</b> (AirAsia / Scoot / Singapore Airlines, ~1h 25–30m). Home by afternoon — Christmas dinner intact.</li>
     </ul>
     <div class="links">
       <a href="https://www.flyscoot.com">✈️ Scoot</a>
+      <a href="https://www.flightconnections.com/flights-from-pen-to-sin">ℹ️ PEN–SIN schedule</a>
     </div>
+  </div>
+</section>
+
+<section>
+  <h2>The Food Hit-List</h2>
+  <p style="margin-bottom:16px; font-size:.95rem">Nine dishes, spread across nine days — nobody eats ten restaurants in one day, and every stop has seats.</p>
+  <div class="dishes">
+    <div class="dish"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/Three%20dim%20sum%20in%20steamer%20basket.jpg?width=900" alt="Dim sum"><div class="in">
+      <h4>Ipoh dim sum</h4><p>Yum Cha House / Foh San — breakfast, trolleys to your table.</p><span class="hours">early morning best</span></div></div>
+    <div class="dish"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/BeanSproutsChicken.jpg?width=900" alt="Taugeh ayam"><div class="in">
+      <h4>Bean-sprout chicken</h4><p>Lou Wong (10am–10pm) &amp; Cowan St Ann Xin (closed Thu) — crunchy fat sprouts, silky hor fun.</p><span class="hours">lunch or dinner</span></div></div>
+    <div class="dish"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/Ipoh%20White%20Coffee%2C%20Old%20Town%20Kopitiam%20in%20Australia.jpg?width=900" alt="White coffee"><div class="in">
+      <h4>White coffee</h4><p>Sin Yoon Loong, since 1937 — smooth, not bitter, with egg tarts.</p><span class="hours">6:30am–2:30pm</span></div></div>
+    <div class="dish"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/Tau%20foo%20fah%20being%20sold%2C%20Malaysia.jpg?width=900" alt="Tau fu fah"><div class="in">
+      <h4>Tau fu fah</h4><p>Funny Mountain — warm silky soya pudding, soya milk on the side.</p><span class="hours">afternoon snack</span></div></div>
+    <div class="dish"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/Asam%20Laksa%20at%20KLCC%20(1).jpg?width=900" alt="Asam laksa"><div class="in">
+      <h4>Asam laksa</h4><p>Wan Dao Tou (Air Itam) — sour, spicy mackerel broth after Penang Hill.</p><span class="hours">lunch</span></div></div>
+    <div class="dish"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/Charkwayteow.JPG?width=900" alt="Char kway teow"><div class="in">
+      <h4>Char kway teow</h4><p>Siam Road / Lorong Selamat — wok-fire noodles, duck-egg version if offered.</p><span class="hours">before noon</span></div></div>
+    <div class="dish"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/NasiKandar.jpg?width=900" alt="Nasi kandar"><div class="in">
+      <h4>Nasi kandar</h4><p>Hameediyah (est. 1907) &amp; Line Clear — curry gravies over rice.</p><span class="hours">lunch or dinner</span></div></div>
+    <div class="dish"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/Cendol%20Durian.JPG?width=900" alt="Cendol"><div class="in">
+      <h4>Teochew cendol</h4><p>Penang Road Famous Teochew Chendul — gula Melaka &amp; coconut over shaved ice.</p><span class="hours">any afternoon</span></div></div>
+    <div class="dish"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/Gurney%20Drive%2C%20George%20Town%20in%202018.jpg?width=900" alt="Gurney Drive hawkers"><div class="in">
+      <h4>Hawker grazing</h4><p>Chulia St (4:30–10:30pm) &amp; Gurney Drive — many small plates, one table.</p><span class="hours">evenings</span></div></div>
   </div>
 </section>
 
@@ -249,11 +331,11 @@
   <h2>Transport Summary</h2>
   <table>
     <tr><th>Leg</th><th>Mode</th><th>Time</th><th>Notes</th></tr>
-    <tr><td>Singapore → Ipoh</td><td>Scoot direct flight</td><td>~1h 20m</td><td>Avoids the 4–5h drive entirely. Book early for Dec school-holiday fares.</td></tr>
-    <tr><td>Within Ipoh</td><td>Grab</td><td>5–15 min</td><td>Everything is short rides. No self-drive needed.</td></tr>
-    <tr><td>Ipoh → Penang</td><td>KTM ETS train to Butterworth + Grab</td><td>~2h 15m + 30 min</td><td>Scenic, comfortable, no motion-sickness risk. Book via KTMB site/app or BusOnlineTicket. <b>Book early — Dec is peak.</b></td></tr>
-    <tr><td>Within Penang</td><td>Grab + occasional trishaw</td><td>5–20 min</td><td>Grab is cheap and plentiful; skip renting a car (George Town parking is misery).</td></tr>
-    <tr><td>Penang → Singapore</td><td>Scoot / AirAsia direct</td><td>~1h 30m</td><td>Midday flight — no dawn rush.</td></tr>
+    <tr><td>Singapore → Ipoh (16 Dec)</td><td>Scoot direct flight</td><td>~1h 20m</td><td>Currently listed as TR486, dep SIN mid-afternoon. Book early — Dec school holidays.</td></tr>
+    <tr><td>Ipoh sightseeing (17–19)</td><td>Private 7-seater MPV with driver</td><td>—</td><td>Door-to-door at every kopitiam/attraction. Confirm <b>luggage space</b> for 4 adults, not just seats.</td></tr>
+    <tr><td>Ipoh → Penang (20 Dec)</td><td>Same MPV, one-way hire</td><td>2.5–3h</td><td>Beats the ETS train for your parents: no platforms, no luggage hauling, toilet stop on demand. (ETS ~2h 15m is the backup if you'd rather ride rails — ktmb.com.my.)</td></tr>
+    <tr><td>Penang sightseeing (21–23)</td><td>Grab 6-seater / hotel car</td><td>5–20 min</td><td>Cheap and plentiful. No self-drive — someone would have to watch the road instead of the family, and George Town parking is misery.</td></tr>
+    <tr><td>Penang → Singapore (24 Dec)</td><td>Direct flight (AirAsia / Scoot / SIA)</td><td>~1h 25–30m</td><td>Midday-ish departure — breakfast without rushing, home for Christmas Eve.</td></tr>
   </table>
 </section>
 
@@ -261,13 +343,14 @@
   <h2>Tips for Travelling with Parents</h2>
   <div class="tips">
     <ul>
-      <li><b>One anchor per day.</b> Every day above has exactly one main outing plus meals — swap, never add.</li>
-      <li><b>December weather:</b> west-coast Malaysia is mostly dry but expect a shower or two; carry a compact umbrella. Start mornings early, rest 1–3pm, eat dinner at 7.</li>
-      <li><b>Hotels:</b> pick lifts-not-stairs, walk-in showers, and locations where the famous coffeeshop is downstairs. In Ipoh: old town / Weil Hotel. In Penang: George Town heritage core.</li>
-      <li><b>Book now-ish:</b> Scoot flights, ETS seats (sell out for school holidays), and Nyonya dinner. Everything else can be decided on the day.</li>
-      <li><b>Money:</b> hawkers are cash — small RM notes. Grab takes card. Bring ~RM100/day cash between you.</li>
-      <li><b>Health:</b> bring regular meds in hand luggage, note that Penang General Hospital and Ipoh's KPJ are reputable if ever needed (touch wood).</li>
-      <li><b>Christmas Eve flight:</b> arriving home 24 Dec afternoon keeps Christmas intact — no one misses the family dinner.</li>
+      <li><b>One anchor per day.</b> Each day has exactly one main outing plus meals — swap, never add.</li>
+      <li><b>No temples anywhere in this plan.</b> Every stop is heritage, nature or food: museums, mansions, a lake, a hill, markets and coffeeshops.</li>
+      <li><b>December weather:</b> west coast is mostly dry but a shower can appear; pack umbrellas, outdoors in the morning, rest 1–3pm.</li>
+      <li><b>Hotels:</b> lifts, walk-in showers, restaurant downstairs, easy car drop-off. Two rooms close together if separate.</li>
+      <li><b>Book ahead (Dec is Malaysian school-holiday peak):</b> flights, hotels, MPV driver, Tasik Cermin online tickets (≥1 day before), Blue Mansion 11am tour, Penang Hill fast-lane. Han Chin Pet Soo also needs advance booking.</li>
+      <li><b>Opening-hours cheat-sheet:</b> kopitiams peak early and close by mid-afternoon (Sin Yoon Loong shuts 2:30pm); hawkers peak at night (Chulia St from 4:30pm); Ann Xin closed Thu; The TOP shorter Tue; Blue Mansion tours only 11am/3:30pm. Every listing above carries its hours — reconfirm by phone/Google a day before.</li>
+      <li><b>Money:</b> hawkers are cash — carry small RM notes (~RM100/day between you). Grab takes card.</li>
+      <li><b>Health:</b> regular meds in hand luggage; consider airport wheelchair assistance if terminal walks tire them. Travel insurance: check age limits for 70+.</li>
     </ul>
   </div>
 </section>
@@ -276,11 +359,13 @@
   <h2>Watch Before You Go</h2>
   <table>
     <tr><th>Video</th><th>What it covers</th></tr>
-    <tr><td><a class="more" href="https://www.youtube.com/watch?v=jBx5Gc2BMWk">3D2N Ipoh — best local food</a></td><td>Ideal preview of Days 2–4</td></tr>
-    <tr><td><a class="more" href="https://www.youtube.com/watch?v=K_oL5ut1Dwc">2 Days in Ipoh travel vlog</a></td><td>Old town, street eats, lake views</td></tr>
-    <tr><td><a class="more" href="https://www.youtube.com/watch?v=2VuX6bMRQ4Q">5 Days in Ipoh ultimate guide</a></td><td>Deeper cut: cafes + factories</td></tr>
-    <tr><td><a class="more" href="https://www.youtube.com/watch?v=Xs4ZN3FdDmE">George Town street food tour</a></td><td>Hawker stall preview for Day 6</td></tr>
-    <tr><td><a class="more" href="https://www.youtube.com/watch?v=7sNgNtoUrTk">24-hour Penang food tour</a></td><td>The classics: laksa, CKT, cendol</td></tr>
+    <tr><td><a class="more" href="https://www.youtube.com/watch?v=sUJaCCOSbrM">48 Hours in Ipoh — underrated food capital</a></td><td>Cowan St chicken, white coffee, Concubine Lane, railway station</td></tr>
+    <tr><td><a class="more" href="https://www.youtube.com/watch?v=jBx5Gc2BMWk">3D2N Ipoh — best local food</a></td><td>Days 2–4 preview</td></tr>
+    <tr><td><a class="more" href="https://www.youtube.com/watch?v=K_oL5ut1Dwc">2 Days in Ipoh</a></td><td>Old streets + Tasik Cermin</td></tr>
+    <tr><td><a class="more" href="https://www.youtube.com/watch?v=2VuX6bMRQ4Q">5 Days in Ipoh ultimate guide</a></td><td>Cafes and deeper cut</td></tr>
+    <tr><td><a class="more" href="https://www.youtube.com/watch?v=Lxu0rgigYUQ">24 Hours in Penang</a></td><td>Clan jetties, nasi kandar, Penang Hill</td></tr>
+    <tr><td><a class="more" href="https://www.youtube.com/watch?v=Xs4ZN3FdDmE">George Town street food tour</a></td><td>Hawker stall preview</td></tr>
+    <tr><td><a class="more" href="https://www.youtube.com/watch?v=7sNgNtoUrTk">24-hour Penang food tour</a></td><td>Laksa, CKT, cendol classics</td></tr>
   </table>
 </section>
 
@@ -288,5 +373,53 @@
 <footer>
   Built for Dad, Mum, and the two of us · 16–24 Dec 2026 · Buen viaje 🎄
 </footer>
+
+<script>
+const P = { // name: [lat,lng], type(f=food/s=sight), note
+  "Lou Wong taugeh ayam 🍗":{c:[4.59401,101.08423],t:"f",n:"Ipoh New Town · daily 10am–10pm · Day 1 dinner"},
+  "Yum Cha House / Foh San dim sum 🥟":{c:[4.59659,101.08033],t:"f",n:"Ipoh · breakfast · Day 2 (before 10am)"},
+  "Sin Yoon Loong white coffee ☕":{c:[4.59323,101.07692],t:"f",n:"since 1937 · 6:30am–2:30pm · Day 2"},
+  "Thean Chun kai see hor fun 🍜":{c:[4.59633,101.07786],t:"f",n:"Old Town · Day 2 lunch"},
+  "Han Chin Pet Soo museum 🏛":{c:[4.59628,101.07912],t:"s",n:"free, air-con, book ahead · Day 2"},
+  "Concubine Lane 🏮":{c:[4.59619,101.07846],t:"s",n:"flat stroll, best late afternoon · Day 2"},
+  "Ipoh Railway Station 🚉":{c:[4.59704,101.07357],t:"s",n:"'Taj Mahal of Ipoh' photo stop · Day 2"},
+  "Tasik Cermin mirror lake 🏞":{c:[4.55895,101.12044],t:"s",n:"9am–5:45pm, boats 9–5:30 · Day 3"},
+  "Cowan St Ann Xin 🍗":{c:[4.5917,101.0835],t:"f",n:"closed Thu → we go Fri · Day 3 lunch"},
+  "Funny Mountain tau fu fah 🍮":{c:[4.5935,101.0805],t:"f",n:"afternoon dessert · Day 3"},
+  "Kellie's Castle 🏰":{c:[4.47451,101.08778],t:"s",n:"ground level for the parents · Day 4"},
+  "Gunung Lang park 🌳":{c:[4.61424,101.08601],t:"s",n:"optional, weather permitting · Day 4"},
+  "Chulia St hawkers 🍢":{c:[5.41724,100.33722],t:"f",n:"Tue–Sun 4:30–10:30pm · Day 5 dinner"},
+  "Blue Mansion (Cheong Fatt Tze) 🏛":{c:[5.42152,100.33477],t:"s",n:"tours 11am & 3:30pm, book ahead · Day 6"},
+  "Hameediyah nasi kandar 🍛":{c:[5.41849,100.33279],t:"f",n:"est. 1907 · Day 6 lunch"},
+  "Chew Jetty 🌊":{c:[5.41197,100.34003],t:"s",n:"first 200m of boardwalk · Day 6"},
+  "Line Clear nasi kandar 🍛":{c:[5.4172,100.3323],t:"f",n:"Jalan Penang · Day 6 dinner"},
+  "Penang Hill funicular 🚡":{c:[5.41582,100.27381],t:"s",n:"fast-lane ticket online · Day 7"},
+  "Wan Dao Tou asam laksa 🍜":{c:[5.4335,100.303],t:"f",n:"Air Itam · Day 7 lunch"},
+  "Kimberley St 🦆":{c:[5.41537,100.33423],t:"f",n:"duck kway chap evening · Day 7"},
+  "The TOP KOMTAR deck 🌆":{c:[5.41458,100.32981],t:"s",n:"10am–10pm · Day 8"},
+  "888 Hokkien Mee 🍲":{c:[5.4129,100.3325],t:"f",n:"Lebuh Presgrave · Day 8 lunch"},
+  "Penang Rd Teochew chendul 🍧":{c:[5.4148,100.3341],t:"f",n:"Lebuh Keng Kwee · Day 8"},
+  "Gurney Drive hawkers 🌅":{c:[5.44038,100.30828],t:"f",n:"farewell dinner · Day 8"}
+};
+const map = L.map('map');
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);
+const groups = {ipoh: L.layerGroup(), penang: L.layerGroup()};
+const pts = [];
+for (const [name,v] of Object.entries(P)) {
+  const city = v.c[0] < 5 ? groups.ipoh : groups.penang;
+  const color = v.t === 'f' ? '#b3442e' : '#1f6f6b';
+  L.circleMarker(v.c, {radius:9, color:'#fff', weight:2, fillColor:color, fillOpacity:.95})
+    .bindPopup(`<b>${name}</b><br>${v.n}<br><a target="_blank" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' Malaysia')}">Open in Google Maps →</a>`)
+    .addTo(city);
+  pts.push(v.c);
+}
+groups.ipoh.addTo(map); groups.penang.addTo(map);
+function flyTo(which){
+  if (which === 'ipoh') map.flyToBounds([[4.45,101.05],[4.63,101.13]], {duration:.8});
+  else if (which === 'penang') map.flyToBounds([[5.35,100.25],[5.46,100.36]], {duration:.8});
+  else map.flyToBounds(L.latLngBounds(pts).pad(.1), {duration:.8});
+}
+flyTo('all'); map.invalidateSize();
+</script>
 </body>
 </html>
